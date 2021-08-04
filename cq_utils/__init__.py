@@ -1,1 +1,1 @@
-from . import units
+from . import units, cadquery
