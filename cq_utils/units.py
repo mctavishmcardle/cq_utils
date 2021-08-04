@@ -1,3 +1,4 @@
+"""Utilities for using `pint`'s unit-wrapped quantities"""
 import enum
 import functools
 import io
@@ -41,6 +42,10 @@ def get_registry(
 ) -> pint.UnitRegistry:
     """Get a unit registry, with optional default unit system
 
+    A part library module should not specify a unit system, and a model script
+    should - this enables specific models to drive the choice of default unit
+    systems.
+
     Args:
         system: The engineering system to use; if `None`, the existing default
             system will be used
@@ -67,7 +72,23 @@ def _to_base_magnitude(
 
 
 def args_to_base_magnitude(func):
-    """Convert any `Quantity` args or kwargs into magnitudes in base units"""
+    """Convert any `Quantity` args or kwargs into magnitudes in base units
+
+    This is intended to be used as follows:
+
+        def part(workplane, dimension: pint.Quantity = default_value):
+            return _part(workplane, dimension)
+
+        @args_to_base_magnitude
+        def _part(workplane, dimension: float):
+            ...
+
+    The decorator & the combination of a public & private function allows the
+    part's interface to be defined with unit-wrapped quantities, and ensures
+    that all parts used by a model (as long as they share the same unit
+    registry - see `get_registry`) use the same units when actually constructing
+    `cadquery` shapes.
+    """
 
     @functools.wraps(func)
     def with_base_units(*args, **kwargs):
